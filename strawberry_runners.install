@@ -1,6 +1,7 @@
 <?PHP
 use Drupal\Core\Config\Entity\ConfigEntityType;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\Database\Database;
 /**
  * Implements hook_update_N().
  *
@@ -39,7 +40,8 @@ function strawberry_runners_update_8001() {
  */
 function strawberry_runners_update_8701() {
 
-  if(!db_table_exists('runneritem_entity')) {
+  $schema = Database::getConnection()->schema();
+  if(!$schema->tableExists('runneritem_entity')) {
     \Drupal::entityTypeManager()->clearCachedDefinitions();
     \Drupal::entityDefinitionUpdateManager()
       ->installEntityType(\Drupal::entityTypeManager()->getDefinition('runneritem_entity'));

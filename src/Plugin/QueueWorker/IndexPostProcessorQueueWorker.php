@@ -35,4 +35,5 @@ use Drupal\search_api\ParseMode\ParseModePluginManager;
  * )
  */
 class IndexPostProcessorQueueWorker extends AbstractPostProcessorQueueWorker {
+
 }

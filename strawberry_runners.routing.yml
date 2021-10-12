@@ -15,6 +15,7 @@ entity.strawberry_runners_postprocessor.collection:
     _permission: 'access administration pages'
   options:
     _admin_route: TRUE
+
 strawberry_runners.ado_tools:
   path: '/node/{node}/adotools'
   defaults:
@@ -27,3 +28,10 @@ strawberry_runners.ado_tools:
     parameters:
       node:
         type: 'entity:node'
+# This will become a better service. I promise.
+strawberry_runners.islandora:
+  path: '/islandora/object/{PID}'
+  defaults:
+    _controller: '\Drupal\strawberry_runners\Controller\Redirect::islandora'
+  requirements:
+    _permission: 'access content'

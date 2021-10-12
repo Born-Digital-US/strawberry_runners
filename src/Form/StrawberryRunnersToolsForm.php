@@ -2,7 +2,6 @@
 
 namespace Drupal\strawberry_runners\Form;
 
-use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -153,5 +152,19 @@ class StrawberryRunnersToolsForm extends FormBase {
     $response->addCommand(new UpdateCodeMirrorCommand('#jmespathoutput', json_encode($result,JSON_PRETTY_PRINT)));
 
     return $response;
+  }
+
+  /**
+   * Only allows access if an ADO.
+   *
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   Run access checks for this account.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   The access result.
+   */
+  public function access(NodeInterface $node, AccountInterface $account) {
+    $is_ado = \Drupal::service('strawberryfield.utility')->bearsStrawberryfield($node);
+    return AccessResult::allowedIf($account->hasPermission('use ado tools') && $is_ado);
   }
 }

@@ -10,6 +10,7 @@ namespace Drupal\strawberry_runners\Plugin\StrawberryRunnersPostProcessor;
 use Drupal\strawberry_runners\Plugin\StrawberryRunnersPostProcessorPluginBase;
 use Drupal\Core\Form\FormStateInterface;
 use frictionlessdata\datapackage\Package;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\strawberry_runners\Annotation\StrawberryRunnersPostProcessor;
 use Drupal\strawberry_runners\Plugin\StrawberryRunnersPostProcessorPluginInterface;
 
@@ -185,25 +186,55 @@ class FrictionlessDataPackagePostProcessor extends StrawberryRunnersPostProcesso
     $node_uuid = isset($io->input->nuuid) ? $io->input->nuuid : NULL;
     $config = $this->getConfiguration();
     $timeout = $config['timeout']; // in seconds
-
+    $output = new \stdClass();
+    $output->searchapi['fulltext'] = '';
     if (isset($io->input->{$input_property}) && $file_uuid && $node_uuid) {
       // To be used by miniOCR as id in the form of {nodeuuid}/canvas/{fileuuid}/p{pagenumber}
       $sequence_number = isset($io->input->{$input_argument}) ? (int) $io->input->{$input_argument} : 1;
       $file_path = isset($io->input->{$input_property}) ? $io->input->{$input_property} : NULL;
-      $package = Package::load($file_path);
-      foreach ($package as $resource) {
-        echo $resource->name();
-        foreach ($resource as $row) {
-          echo $row;
+      // File path may not be .zip?
+      // We may want to check
+      $info = pathinfo($file_path);
+      $newname = $info['dirname'].'/'.$info['filename'] . '.' . 'zip';
+      try {
+        $this->fileSystem->move($file_path, $newname, FileSystemInterface::EXISTS_REPLACE);
+        $package = Package::load($newname);
+        if ($package) {
+          foreach ($package as $resource) {
+            foreach ($resource as $row) {
+            }
+          }
         }
       }
-          $output = new \stdClass();
-          $output->searchapi['fulltext'] = NULL;
-          $output->plugin = NULL;
-          $io->output = $output;
+      catch (\Exception $exception) {
+        // Not a valid datapackage, may still be a WACZ 1.1 so let's try with that
+        $z = new \ZipArchive();
+        $contents = NULL;
+        if ($z->open($newname)) {
+          $fp = $z->getStream('pages/pages.jsonl');
+          if ($fp) {
+
+            while (($buffer = fgets($fp, 4096)) !== FALSE) {
+            }
+            if (!feof($fp)) {
+            }
+            fclose($fp);
+          }
+          else {
+            // Opening the ZIP file failed.
+            // error_log('NO Pages found to extract');
+          }
         }
-      // Lastly plain text version of the XML.
-      $io->output->searchapi['plaintext'] = isset($output->searchapi['fulltext']) ? strip_tags(str_replace("<l>", PHP_EOL . "<l> ", $output->searchapi['fulltext'])) : '';
+      }
+
+
+      $output->searchapi['fulltext'] = NULL;
+      $output->plugin = NULL;
+
+    }
+    $io->output = $output;
+    // Lastly plain text version of the XML.
+    $io->output->searchapi['plaintext'] = isset($output->searchapi['fulltext']) ? strip_tags(str_replace("<l>", PHP_EOL . "<l> ", $output->searchapi['fulltext'])) : '';
   }
 
   /**
@@ -219,7 +250,7 @@ class FrictionlessDataPackagePostProcessor extends StrawberryRunnersPostProcesso
    */
   public function buildExecutableCommand(\stdClass $io) {
 
-      return NULL;
+    return NULL;
   }
 
 }

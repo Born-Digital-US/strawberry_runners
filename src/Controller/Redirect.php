@@ -84,6 +84,4 @@ class Redirect extends ControllerBase {
     $response = new RedirectResponse('/do/'.$parts[1], 302);
     return $response;
   }
-
-
 }
